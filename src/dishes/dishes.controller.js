@@ -8,6 +8,7 @@ const nextId = require("../utils/nextId");
 
 // TODO: Implement the /dishes handlers needed to make the tests pass
 
+//CREATE
 function create(req, res){
     const { data: { name, description, price, image_url } = {} } = req.body;
     const newId = new nextId();
@@ -22,7 +23,7 @@ function create(req, res){
     res.status(201).json({ data: newDish });
 }
 
-//Validation middleware
+//////////////Validation middleware below//////////////
 //Name property missing
 function hasName(req, res, next){
     const { data: { name } = {} } = req.body;
@@ -134,6 +135,60 @@ function imageHasText(req, res, next){
     next();
 }
 
+//////////////Validation middleware above//////////////
+//LIST
+function list(req,res){
+    res.json({ data: dishes });
+}
+
+//Existing dishes
+function dishExists(req, res, next){
+    const { dishId } = req.params;
+    const foundDish = dishes.find((dish) => dish.id === dishId);
+    if (foundDish){
+        res.locals.dish = foundDish;
+        return next();
+    }
+    next({
+        status: 404,
+        message: `Dish does not exist: ${dishId}`,
+    })
+}
+
+//Matching dishes
+function matchingId(req, res, next){
+    const { dishId } = req.params; //dishId in the route
+    const { data: { id } = {} } = req.body; //id in the body
+    if (id === dishId || !id){ //checking if dishId in route matches id in body
+        return next();
+    }
+    next({
+        status: 400,
+        message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+    });
+}
+
+
+//READ
+function read(req, res, next){
+    res.json({ data: res.locals.dish });
+}
+
+//UPDATE
+function update(req, res){
+    const { dishId } = req.params;
+    const foundDish = dishes.find((dish) => dish.id ===dishId);
+    const { data: { name, description, price, image_url } = {} } = req.body;
+
+    foundDish.name = name;
+    foundDish.description = description;
+    foundDish.price = price;
+    foundDish.image_url = image_url;
+
+    res.json({ data: foundDish });
+}
+
+
 module.exports = {
     create: [
         hasName,
@@ -147,4 +202,20 @@ module.exports = {
         priceIsNumber,
         create,
     ],
+    list,
+    read: [dishExists, read],
+    update: [
+        dishExists,
+        matchingId,
+        hasName,
+        nameHasText,
+        hasDescription,
+        descriptionHasText,
+        hasImage,
+        imageHasText,
+        hasPrice,
+        priceOverZero,
+        priceIsNumber,
+        update,     
+    ]
 }
