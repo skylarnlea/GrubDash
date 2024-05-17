@@ -10,6 +10,7 @@ const nextId = require("../utils/nextId");
 
 
 /////////////Validation Middleware below/////////////
+
 //deliverTo property is missing
 function hasDeliverTo(req, res, next){
     const { data: { deliverTo } = {} } = req.body;
@@ -97,6 +98,7 @@ function dishesEmptyArray(req, res, next){
 function hasQuantity(req, res, next){
     const { data: { quantity } = {} } = req.body;
     if (quantity){
+        res.locals.quantity = quantity;
         return next();
     }
     next({
@@ -104,3 +106,31 @@ function hasQuantity(req, res, next){
         message: `Dish ${index} must have a quantity that is an integer greater than 0`,
     });
 }
+
+//dish quantity property is zero or less
+function quantityOverZero(req, res, next){
+    const quantity = res.locals.quantity;
+    if (quantity > 0) {
+        res.locals.quantity = quantity;
+        return next();
+    } else {
+        next({
+            status: 400,
+            message: `Dish ${index} must have a quantity that is an integer greater than 0`,
+        });
+    };
+}
+
+//dish quantity property is not an integer
+function quantityIsNumber(req, res, next){
+    const { data: { quantity } = {} } = req.body;
+    if (quantity === NaN){
+        return next ({
+            status: 400,
+            message: `Dish ${index} must have a quantity that is an integer greater than 0`,
+        });
+    }
+    next();
+}
+
+/////////////Validation Middleware above/////////////
