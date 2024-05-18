@@ -101,9 +101,9 @@ function priceOverZero(req, res, next){
 
 //Price property is not an integer
 function priceIsNumber(req, res, next){
-    const { data: { price } = {} } = req.body;
-    if (price === NaN){
-        return next ({
+    const { price } = req.body.data;
+    if (typeof(price) !== "number") {
+        return next({
             status: 400,
             message: "Dish must have a price that is an integer greater than 0"
         });
